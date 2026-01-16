@@ -4,16 +4,18 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
   <meta name="theme-color" content="#0b1020" />
-  <title>TAP TYCOON — Ultra Easy Clicker</title>
+  <title>TAP TYCOON — Mobile Clicker</title>
   <style>
     :root{
       --bg0:#060914; --bg1:#0b1020;
-      --glass: rgba(255,255,255,.10);
       --stroke: rgba(255,255,255,.14);
       --txt: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.65);
-      --good:#7CFFB2; --warn:#FFD27C; --bad:#FF5A7A;
       --shadow: rgba(0,0,0,.45);
+
+      --sheetClosed: min(220px, 30vh);
+      --sheetOpen: min(520px, 62vh);
+      --sheetRadius: 22px;
     }
     html,body{
       margin:0; height:100%; overflow:hidden;
@@ -28,23 +30,16 @@
       user-select:none;
     }
 
-    /* Layout */
-    #app{
-      position:fixed; inset:0;
-      display:flex; flex-direction:column;
-      padding:
-        max(14px, env(safe-area-inset-top))
-        max(14px, env(safe-area-inset-right))
-        max(14px, env(safe-area-inset-bottom))
-        max(14px, env(safe-area-inset-left));
-      gap:12px;
-    }
-
-    .topbar{
+    /* Top HUD */
+    #hud{
+      position:fixed; left:0; right:0; top:0;
+      padding: max(12px, env(safe-area-inset-top)) 12px 10px;
       display:flex; justify-content:space-between; align-items:center; gap:10px;
+      pointer-events:none;
+      z-index:10;
     }
-
     .pill{
+      pointer-events:auto;
       display:flex; align-items:baseline; gap:10px;
       padding:10px 12px;
       border-radius:999px;
@@ -52,37 +47,50 @@
       border:1px solid var(--stroke);
       box-shadow: 0 16px 55px var(--shadow);
       backdrop-filter: blur(12px);
-      font-weight:900;
+      font-weight:950;
       letter-spacing:.2px;
+      white-space:nowrap;
     }
-    .pill small{ color:var(--muted); font-weight:800; }
+    .pill small{ color:var(--muted); font-weight:850; }
     .btn{
+      pointer-events:auto;
       border:1px solid var(--stroke);
       background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.08));
       color:var(--txt);
       border-radius:999px;
       padding:10px 12px;
-      font-weight:950;
+      font-weight:1000;
       letter-spacing:.2px;
       box-shadow: 0 16px 55px var(--shadow);
       backdrop-filter: blur(10px);
     }
     .btn:active{ transform: scale(.98); }
 
-    .mid{
-      flex: 1 1 auto;
-      display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
+    /* Main area always visible above sheet */
+    #main{
+      position:fixed;
+      inset:0;
+      padding:
+        calc(max(12px, env(safe-area-inset-top)) + 70px)
+        14px
+        calc(max(12px, env(safe-area-inset-bottom)) + var(--sheetClosed) + 12px)
+        14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
       gap:12px;
-      position:relative;
-      overflow:hidden;
+      z-index:1;
     }
 
-    /* Big tap button */
+    /* Big tap button (scales with screen) */
     #tapBtn{
-      width:min(300px, 72vw);
+      width: min(320px, 78vw);
+      height: min(320px, 78vw);
+      max-height: min(320px, 36vh); /* keeps it visible on short screens */
+      max-width: min(320px, 36vh);
       aspect-ratio:1/1;
-      border-radius: 999px;
+      border-radius:999px;
       border: 1px solid rgba(255,255,255,.18);
       background:
         radial-gradient(circle at 30% 25%, rgba(255,255,255,.18), transparent 45%),
@@ -90,31 +98,21 @@
       box-shadow:
         0 22px 90px rgba(0,0,0,.55),
         0 0 45px rgba(116,216,255,.25);
-      position:relative;
       display:flex; align-items:center; justify-content:center;
       font-weight:1000;
       letter-spacing:.4px;
       cursor:pointer;
       transform: translateZ(0);
       transition: transform .08s ease, filter .10s ease;
+      position:relative;
     }
     #tapBtn:active{ transform: scale(.98); filter: brightness(1.06); }
-    #tapBtn .label{
-      text-align:center;
-      line-height:1.05;
-      text-shadow: 0 10px 30px rgba(0,0,0,.35);
-    }
-    #tapBtn .label .big{
-      font-size: clamp(30px, 6.5vw, 44px);
-    }
+    #tapBtn .label{ text-align:center; line-height:1.05; text-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    #tapBtn .label .big{ font-size: clamp(26px, 7vw, 44px); }
     #tapBtn .label .small{
-      margin-top:8px;
-      font-size: 14px;
-      font-weight:900;
-      color: rgba(255,255,255,.85);
-      opacity:.95;
+      margin-top:8px; font-size: 14px;
+      font-weight:900; color: rgba(255,255,255,.86);
     }
-    /* pulse ring */
     #tapBtn::after{
       content:"";
       position:absolute; inset:-18px;
@@ -133,72 +131,15 @@
 
     .statsLine{
       display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
-      color:var(--muted);
-      font-weight:850;
-      text-align:center;
+      color:var(--muted); font-weight:900; text-align:center;
+      max-width: 560px;
     }
     .statsLine b{ color:var(--txt); }
 
-    /* Shop panel */
-    .panel{
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
-      border:1px solid var(--stroke);
-      border-radius: 22px;
-      box-shadow: 0 18px 80px rgba(0,0,0,.45);
-      backdrop-filter: blur(12px);
-      padding:12px;
-    }
-    .panelHeader{
-      display:flex; justify-content:space-between; align-items:center; gap:10px;
-      margin-bottom:10px;
-    }
-    .panelHeader .title{
-      font-weight:1000;
-      letter-spacing:.3px;
-      display:flex; align-items:center; gap:10px;
-    }
-    .muted{ color:var(--muted); font-weight:800; }
-
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-    }
-    @media (max-width: 420px){
-      .grid{ grid-template-columns: 1fr; }
-    }
-
-    .card{
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:18px;
-      padding:12px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      min-height: 108px;
-    }
-    .card .name{ font-weight:1000; }
-    .card .desc{ color:var(--muted); font-weight:800; font-size:12px; line-height:1.25; }
-    .card .row{
-      display:flex; justify-content:space-between; align-items:center; gap:8px;
-      margin-top:auto;
-    }
-    .buy{
-      padding:9px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.08);
-      color:var(--txt);
-      font-weight:1000;
-    }
-    .buy:active{ transform: scale(.98); }
-    .buy[disabled]{ opacity:.45; }
-
-    /* Toast */
+    /* Toasts */
     #toasts{
       position:fixed; left:50%; transform:translateX(-50%);
-      top: calc(max(12px, env(safe-area-inset-top)) + 62px);
+      top: calc(max(12px, env(safe-area-inset-top)) + 68px);
       display:flex; flex-direction:column; gap:8px;
       pointer-events:none;
       z-index:50;
@@ -210,7 +151,7 @@
       border:1px solid rgba(255,255,255,.14);
       box-shadow:0 18px 70px rgba(0,0,0,.45);
       backdrop-filter: blur(12px);
-      font-weight:950;
+      font-weight:1000;
       opacity:0;
       transform: translateY(-8px) scale(.98);
       animation: tin .22s ease forwards, tout .22s ease forwards;
@@ -218,22 +159,90 @@
       max-width: min(92vw, 520px);
       text-align:center;
     }
-    .toast small{ color:var(--muted); font-weight:850; }
+    .toast small{ color:var(--muted); font-weight:900; }
     @keyframes tin{ to{opacity:1; transform: translateY(0) scale(1);} }
     @keyframes tout{ to{opacity:0; transform: translateY(-10px) scale(.98);} }
 
-    /* Floating numbers */
+    /* Bottom sheet shop */
+    #sheet{
+      position:fixed; left:0; right:0; bottom:0;
+      height: var(--sheetClosed);
+      border-radius: var(--sheetRadius) var(--sheetRadius) 0 0;
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.07));
+      border-top: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 -16px 80px rgba(0,0,0,.45);
+      backdrop-filter: blur(14px);
+      z-index:20;
+      overflow:hidden;
+      transition: height .18s ease;
+    }
+    #sheet.open{ height: var(--sheetOpen); }
+
+    #sheetHeader{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    #handle{
+      width: 54px; height: 6px; border-radius:999px;
+      background: rgba(255,255,255,.20);
+      margin: 0 auto;
+    }
+    #sheetTitle{
+      display:flex; align-items:center; gap:10px;
+      font-weight:1000; letter-spacing:.2px;
+    }
+    #sheetHint{ color:var(--muted); font-weight:900; font-size:12px; }
+
+    #sheetBody{
+      height: calc(100% - 52px);
+      overflow:auto; /* IMPORTANT: scroll upgrades */
+      padding: 10px 12px calc(max(12px, env(safe-area-inset-bottom)) + 14px);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    .card{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .name{ font-weight:1000; }
+    .desc{ color:var(--muted); font-weight:900; font-size:12px; line-height:1.25; }
+    .row{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .buy{
+      padding:9px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color:var(--txt);
+      font-weight:1000;
+    }
+    .buy:active{ transform: scale(.98); }
+    .buy[disabled]{ opacity:.45; }
+    .muted{ color:var(--muted); font-weight:900; }
+
+    /* Floating +numbers */
     .float{
-      position:absolute;
+      position:fixed;
       font-weight:1000;
       pointer-events:none;
       text-shadow: 0 14px 40px rgba(0,0,0,.45);
       will-change: transform, opacity;
+      z-index:30;
     }
 
-    /* Bonus drop (big star) */
+    /* Bonus star */
     #bonus{
-      position:absolute;
+      position:fixed;
       width:72px; height:72px;
       border-radius: 18px;
       display:none;
@@ -242,50 +251,58 @@
       border:1px solid rgba(255,255,255,.18);
       box-shadow: 0 22px 80px rgba(0,0,0,.45), 0 0 45px rgba(255,210,124,.22);
       cursor:pointer;
+      z-index:25;
+      transform: translate(-50%, -50%);
     }
-    #bonus:active{ transform: scale(.98); }
+    #bonus:active{ transform: translate(-50%, -50%) scale(.98); }
     #bonus span{ font-size:34px; filter: drop-shadow(0 12px 30px rgba(0,0,0,.35)); }
   </style>
 </head>
 <body>
   <div id="toasts"></div>
 
-  <div id="app">
-    <div class="topbar">
-      <div class="pill"><span id="money">0</span> <small>Coins</small></div>
-      <div style="display:flex; gap:10px;">
-        <button class="btn" id="sound">🔊</button>
-        <button class="btn" id="vibe">📳</button>
-        <button class="btn" id="menu">ℹ️</button>
+  <div id="hud">
+    <div class="pill"><span id="money">0</span> <small>Coins</small></div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn" id="sound">🔊</button>
+      <button class="btn" id="vibe">📳</button>
+      <button class="btn" id="toggleShop">🛒</button>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="tapBtn" role="button" aria-label="Tippen um Coins zu bekommen">
+      <div class="label">
+        <div class="big">TIPPE!</div>
+        <div class="small">+<span id="perClick">1</span> pro Tap</div>
       </div>
     </div>
 
-    <div class="mid" id="mid">
-      <div id="bonus" title="Bonus! Tippen!"><span>⭐</span></div>
-
-      <div id="tapBtn" role="button" aria-label="Tippen um Coins zu bekommen">
-        <div class="label">
-          <div class="big">TIPPE!</div>
-          <div class="small">+<span id="perClick">1</span> pro Tap</div>
-        </div>
-      </div>
-
-      <div class="statsLine">
-        <span><b id="cps">0</b> / Sek</span>
-        <span>•</span>
-        <span>Best: <b id="best">0</b></span>
-        <span>•</span>
-        <span>Level: <b id="lvl">1</b></span>
-      </div>
-      <div class="muted" style="text-align:center; max-width:520px; line-height:1.25;">
-        Kauf Upgrades → automatisch Coins / Sek. Ab und zu spawnt ein ⭐ Bonus.
-      </div>
+    <div class="statsLine">
+      <span><b id="cps">0</b> / Sek</span>
+      <span>•</span>
+      <span>Best: <b id="best">0</b></span>
+      <span>•</span>
+      <span>Level: <b id="lvl">1</b></span>
     </div>
 
-    <div class="panel">
-      <div class="panelHeader">
-        <div class="title">🛒 Shop</div>
-        <div class="muted">Tip: erst “Auto-Click” holen</div>
+    <div class="muted" style="text-align:center; max-width:560px; line-height:1.25;">
+      Tippe für Coins. Öffne den Shop unten (🛒) für Upgrades. ⭐ Bonus spawnt manchmal.
+    </div>
+  </div>
+
+  <div id="bonus" title="Bonus! Tippen!"><span>⭐</span></div>
+
+  <div id="sheet" class="">
+    <div id="sheetHeader">
+      <div style="width:54px;"></div>
+      <div id="handle"></div>
+      <div style="width:54px;"></div>
+    </div>
+    <div id="sheetBody">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:10px;">
+        <div id="sheetTitle">🛒 Upgrades</div>
+        <div id="sheetHint">Tip: erst Auto-Click</div>
       </div>
       <div class="grid" id="shopGrid"></div>
     </div>
@@ -301,8 +318,7 @@
     n = Math.floor(n);
     if (n < 1000) return ""+n;
     const units = ["K","M","B","T"];
-    let u = -1;
-    let x = n;
+    let u = -1, x = n;
     while (x >= 1000 && u < units.length-1){ x/=1000; u++; }
     return (x>=100 ? x.toFixed(0) : x>=10 ? x.toFixed(1) : x.toFixed(2)) + units[u];
   };
@@ -315,19 +331,17 @@
   const $cps = document.getElementById("cps");
   const $best = document.getElementById("best");
   const $lvl = document.getElementById("lvl");
-
   const $tapBtn = document.getElementById("tapBtn");
-  const $mid = document.getElementById("mid");
   const $shopGrid = document.getElementById("shopGrid");
-
   const $toasts = document.getElementById("toasts");
   const $sound = document.getElementById("sound");
   const $vibe = document.getElementById("vibe");
-  const $menu = document.getElementById("menu");
-
+  const $toggleShop = document.getElementById("toggleShop");
+  const $sheet = document.getElementById("sheet");
+  const $handle = document.getElementById("handle");
   const $bonus = document.getElementById("bonus");
 
-  // ---------- audio (simple beep) ----------
+  // ---------- audio ----------
   let audioCtx = null;
   let soundOn = true;
   function beep(freq=520, dur=0.045, gain=0.06, type="triangle"){
@@ -352,7 +366,7 @@
   const vibrate = (ms)=>{ if (vibeOn && navigator.vibrate) navigator.vibrate(ms); };
 
   // ---------- storage ----------
-  const KEY = "tap_tycoon_v1";
+  const KEY = "tap_tycoon_sheet_v1";
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)||"{}"); } catch { return {}; } };
   const save = (obj) => localStorage.setItem(KEY, JSON.stringify(obj));
 
@@ -371,15 +385,14 @@
     best: 0,
     level: 1,
     perClick: 1,
-    levelsBought: {}, // upgrade levels
+    levelsBought: {},
     lastTick: now(),
     lastSave: now(),
-    lastBonusAt: 0,
     bonusActive: false,
     bonusHideT: 0
   };
 
-  // ---------- init from storage ----------
+  // ---------- init ----------
   const d = load();
   S.coins = Number(d.coins || 0);
   S.best  = Number(d.best  || 0);
@@ -390,9 +403,6 @@
   vibeOn  = d.vibeOn  !== false;
   S.lastTick = Number(d.lastTick || now());
 
-  // Offline progress (cap so it doesn't explode)
-  const offlineMs = clamp(now() - S.lastTick, 0, 1000*60*60*6); // max 6h
-  // compute cps and grant
   function getCps(){
     let cps = 0;
     for (const u of upgrades){
@@ -401,12 +411,12 @@
     }
     return cps;
   }
-  const offlineCoins = getCps() * (offlineMs/1000);
-  if (offlineCoins >= 1){
-    S.coins += offlineCoins;
-  }
 
-  // ---------- helpers ----------
+  // offline progress (max 6h)
+  const offlineMs = clamp(now() - S.lastTick, 0, 1000*60*60*6);
+  const offlineCoins = getCps() * (offlineMs/1000);
+  if (offlineCoins >= 1) S.coins += offlineCoins;
+
   function costFor(u){
     const lvl = Number(S.levelsBought[u.id] || 0);
     return Math.floor(u.baseCost * Math.pow(1.18, lvl));
@@ -429,7 +439,7 @@
     el.style.opacity = "1";
     el.style.transform = "translate(-50%, -10px) scale(1)";
     el.style.fontSize = "18px";
-    $mid.appendChild(el);
+    document.body.appendChild(el);
 
     const dx = rnd(-18, 18);
     const dy = rnd(-60, -90);
@@ -447,12 +457,9 @@
   }
 
   function updateDerived(){
-    // level based on best coins (simple & satisfying)
     S.level = Math.max(1, Math.floor(Math.sqrt(S.best/120)) + 1);
-    // per click scales lightly with level
     S.perClick = 1 + Math.floor((S.level-1) * 0.35);
 
-    // UI
     const cps = getCps();
     $money.textContent = fmt(S.coins);
     $perClick.textContent = fmt(S.perClick);
@@ -477,7 +484,6 @@
     });
   }
 
-  // ---------- shop ----------
   function buildShop(){
     $shopGrid.innerHTML = "";
     for (const u of upgrades){
@@ -506,6 +512,7 @@
       buy.className = "buy";
       buy.textContent = "Kaufen";
       buy.disabled = S.coins < cost;
+
       buy.addEventListener("click", () => {
         if (S.coins < cost) { toast("Zu wenig Coins"); vibrate(10); return; }
         S.coins -= cost;
@@ -529,9 +536,7 @@
     }
   }
 
-  // ---------- tap action ----------
   function doTap(clientX, clientY){
-    // wake audio on first interaction
     if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
 
     const gain = S.perClick;
@@ -541,19 +546,15 @@
     beep(520 + Math.min(700, gain*6), 0.035, 0.05, "triangle");
     vibrate(8);
 
-    // floating number
-    const rect = $mid.getBoundingClientRect();
-    const x = clamp(clientX - rect.left, 20, rect.width - 20);
-    const y = clamp(clientY - rect.top, 20, rect.height - 20);
-    floatText("+" + fmt(gain), x, y);
+    floatText("+" + fmt(gain), clientX, clientY);
 
-    updateDerived();
-    buildShop();
-
-    // bonus chance: tiny chance per tap
+    // small chance to spawn bonus star
     if (!S.bonusActive && Math.random() < 0.035){
       spawnBonus();
     }
+
+    updateDerived();
+    buildShop();
   }
 
   $tapBtn.addEventListener("pointerdown", (e) => {
@@ -561,18 +562,15 @@
     doTap(e.clientX, e.clientY);
   });
 
-  // ---------- bonus star ----------
+  // Bonus star
   function spawnBonus(){
     S.bonusActive = true;
-    const rect = $mid.getBoundingClientRect();
-    const x = rnd(50, rect.width - 50);
-    const y = rnd(30, rect.height - 120);
-
+    const x = rnd(60, innerWidth - 60);
+    const y = rnd(140, innerHeight - 220);
     $bonus.style.display = "flex";
     $bonus.style.left = x + "px";
     $bonus.style.top  = y + "px";
-    $bonus.style.transform = "translate(-50%, -50%) scale(1)";
-    S.bonusHideT = now() + 5000; // disappears after 5s
+    S.bonusHideT = now() + 5000;
     toast("⭐ BONUS!", "Tippe schnell!");
   }
 
@@ -589,10 +587,6 @@
     vibrate(22);
     toast("BONUS geholt!", `+${fmt(bonus)} Coins`);
 
-    // float
-    const rect = $mid.getBoundingClientRect();
-    floatText("+" + fmt(bonus), rect.width/2, rect.height/2 - 10);
-
     S.bonusActive = false;
     $bonus.style.display = "none";
 
@@ -601,7 +595,7 @@
     saveAll();
   });
 
-  // ---------- settings ----------
+  // settings
   $sound.addEventListener("click", () => {
     soundOn = !soundOn;
     toast(soundOn ? "Sound an" : "Sound aus");
@@ -609,7 +603,6 @@
     updateDerived();
     saveAll();
   });
-
   $vibe.addEventListener("click", () => {
     vibeOn = !vibeOn;
     toast(vibeOn ? "Vibration an" : "Vibration aus");
@@ -618,26 +611,30 @@
     saveAll();
   });
 
-  $menu.addEventListener("click", () => {
-    const cps = getCps();
-    toast("TAP TYCOON", `Tippe → Coins. Upgrades → +/Sek. Aktuell: ${fmt(cps)}/Sek`);
-    beep(560, 0.04, 0.05, "triangle");
-  });
+  // sheet toggle
+  function toggleSheet(force){
+    const open = (typeof force === "boolean") ? force : !$sheet.classList.contains("open");
+    $sheet.classList.toggle("open", open);
+    $toggleShop.textContent = open ? "⬇️" : "🛒";
+  }
+  $toggleShop.addEventListener("click", () => { toggleSheet(); beep(560,0.04,0.05,"triangle"); });
+  $handle.addEventListener("click", () => { toggleSheet(); beep(560,0.04,0.05,"triangle"); });
 
-  // ---------- main tick ----------
+  // auto-open shop on very small screens so you notice it exists
+  if (innerHeight < 700) toggleSheet(false);
+
+  // tick loop
   let last = performance.now();
   function loop(t){
     const dt = Math.min(0.05, (t-last)/1000);
     last = t;
 
-    // income
     const cps = getCps();
     if (cps > 0){
       S.coins += cps * dt;
       S.best = Math.max(S.best, S.coins);
     }
 
-    // bonus timeout
     if (S.bonusActive && now() > S.bonusHideT){
       S.bonusActive = false;
       $bonus.style.display = "none";
@@ -645,7 +642,6 @@
 
     updateDerived();
 
-    // save every ~4s
     if (now() - S.lastSave > 4000){
       S.lastSave = now();
       saveAll();
@@ -654,14 +650,11 @@
     requestAnimationFrame(loop);
   }
 
-  // ---------- start ----------
-  if (offlineCoins >= 1){
-    toast("Offline Coins", `+${fmt(offlineCoins)} (max 6h)`);
-  }
+  // start
+  if (offlineCoins >= 1) toast("Offline Coins", `+${fmt(offlineCoins)} (max 6h)`);
   updateDerived();
   buildShop();
   requestAnimationFrame(loop);
-
 })();
 </script>
 </body>
