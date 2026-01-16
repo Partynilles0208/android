@@ -2,425 +2,120 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
   <meta name="theme-color" content="#0b1020" />
-  <title>NEON GAP RUN — Mobile Arcade</title>
+  <title>FLIP DODGE — One Tap Arcade</title>
   <style>
     :root{
-      --bg0:#070a14;
-      --bg1:#0b1020;
-      --glass: rgba(255,255,255,.08);
-      --glass2: rgba(255,255,255,.12);
+      --bg0:#070a14; --bg1:#0b1020;
+      --glass: rgba(255,255,255,.10);
+      --stroke: rgba(255,255,255,.14);
       --txt: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.65);
-      --good: #7CFFB2;
-      --warn: #FFD27C;
-      --bad:  #FF5A7A;
-      --cyan: #74d8ff;
-      --pink: #ff6df6;
-      --vio:  #a98bff;
-      --shadow: rgba(0,0,0,.35);
+      --good:#7CFFB2; --warn:#FFD27C; --bad:#FF5A7A;
+      --shadow: rgba(0,0,0,.40);
     }
-
-    html, body{
-      margin:0; padding:0;
-      width:100%; height:100%;
-      background: radial-gradient(1200px 800px at 20% 10%, rgba(120,140,255,.22), transparent 60%),
-                  radial-gradient(900px 600px at 80% 30%, rgba(255,120,220,.18), transparent 55%),
-                  linear-gradient(180deg, var(--bg1), var(--bg0));
-      color: var(--txt);
-      overflow:hidden;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      -webkit-tap-highlight-color: transparent;
-      touch-action: none;
-      user-select:none;
+    html,body{margin:0;height:100%;overflow:hidden;background:
+      radial-gradient(1100px 700px at 20% 10%, rgba(120,140,255,.22), transparent 60%),
+      radial-gradient(900px 600px at 80% 25%, rgba(255,120,220,.18), transparent 55%),
+      linear-gradient(180deg,var(--bg1),var(--bg0));
+      color:var(--txt); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      -webkit-tap-highlight-color:transparent; touch-action:manipulation; user-select:none;
     }
-
-    canvas{
-      position:fixed; inset:0;
-      width:100vw; height:100vh;
-      display:block;
-    }
-
-    /* HUD / UI */
-    #ui{
-      position:fixed; inset:0;
-      pointer-events:none;
-      padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right))
-               max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
+    canvas{position:fixed;inset:0;width:100vw;height:100vh;display:block}
+    #hud{
+      position:fixed; left:0; right:0; top:0;
+      padding:max(12px,env(safe-area-inset-top)) 12px 0;
+      display:flex; justify-content:space-between; gap:10px;
       pointer-events:none;
     }
-
     .pill{
       pointer-events:auto;
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      padding:10px 12px;
-      border-radius:999px;
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
-      box-shadow: 0 14px 40px var(--shadow);
-      border: 1px solid rgba(255,255,255,.12);
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:999px;
+      background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.07));
+      border:1px solid var(--stroke);
+      box-shadow:0 16px 50px var(--shadow);
       backdrop-filter: blur(10px);
+      font-weight:800; letter-spacing:.2px;
     }
-
-    .pill strong{ font-weight:800; letter-spacing:.3px; }
-    .pill small{ color:var(--muted); }
-
+    .pill small{color:var(--muted); font-weight:700}
     .btn{
       pointer-events:auto;
-      appearance:none; border:0;
-      padding:10px 12px;
-      border-radius:14px;
-      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.08));
-      border: 1px solid rgba(255,255,255,.14);
-      color:var(--txt);
-      font-weight:700;
-      letter-spacing:.2px;
-      box-shadow: 0 16px 44px var(--shadow);
-      backdrop-filter: blur(10px);
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      cursor:pointer;
-      transform: translateZ(0);
-      transition: transform .08s ease, filter .12s ease;
+      border:1px solid var(--stroke);
+      background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.08));
+      border-radius:999px; padding:10px 12px;
+      box-shadow:0 16px 50px var(--shadow);
+      color:var(--txt); font-weight:900;
     }
-    .btn:active{ transform: scale(.98); filter: brightness(1.08); }
-    .btn.icon{ padding:10px 11px; border-radius:999px; }
-    .btn.secondary{ opacity:.9; }
-    .btn.good{ border-color: rgba(124,255,178,.35); }
-    .btn.warn{ border-color: rgba(255,210,124,.38); }
-    .btn.bad{  border-color: rgba(255,90,122,.38); }
-
-    .leftGroup, .rightGroup{
-      display:flex; align-items:center; gap:10px;
-      pointer-events:none;
+    .btn:active{transform:scale(.98)}
+    #screen{
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
+      background: radial-gradient(900px 700px at 50% 40%, rgba(0,0,0,.20), rgba(0,0,0,.45));
     }
-    .leftGroup > *, .rightGroup > *{ pointer-events:auto; }
-
-    #toastWrap{
-      position:fixed;
-      left:50%;
-      top: calc(max(18px, env(safe-area-inset-top)) + 58px);
-      transform:translateX(-50%);
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      pointer-events:none;
-      align-items:center;
-      z-index:10;
-    }
-    .toast{
-      max-width:min(92vw, 420px);
-      padding:10px 12px;
-      border-radius:999px;
-      background: rgba(20,25,45,.72);
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow: 0 18px 55px rgba(0,0,0,.38);
-      backdrop-filter: blur(12px);
-      color:var(--txt);
-      font-weight:700;
-      letter-spacing:.2px;
-      opacity:0;
-      transform: translateY(-6px) scale(.98);
-      animation: toastIn .22s ease forwards, toastOut .25s ease forwards;
-      animation-delay: 0ms, 1500ms;
-    }
-    .toast small{ color:var(--muted); font-weight:600; }
-    @keyframes toastIn{ to{ opacity:1; transform: translateY(0) scale(1);} }
-    @keyframes toastOut{ to{ opacity:0; transform: translateY(-8px) scale(.98);} }
-
-    /* Screens */
-    .screen{
-      position:fixed; inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      pointer-events:auto;
-      z-index:20;
-      padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right))
-               max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
-    }
-    .screen.show{ display:flex; }
-
     .card{
-      width:min(560px, 94vw);
-      border-radius:24px;
-      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow: 0 22px 75px rgba(0,0,0,.45);
-      backdrop-filter: blur(14px);
+      width:min(520px, 94vw);
       padding:18px;
+      border-radius:24px;
+      background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      border:1px solid var(--stroke);
+      box-shadow:0 22px 80px rgba(0,0,0,.50);
+      backdrop-filter: blur(14px);
     }
-    .title{
-      display:flex; align-items:flex-start; justify-content:space-between;
-      gap:12px; margin-bottom:10px;
-    }
-    .title h1{
-      margin:0;
-      font-size: clamp(24px, 4.6vw, 34px);
-      line-height:1.05;
-      letter-spacing:.2px;
-    }
-    .subtitle{
-      color:var(--muted);
-      font-weight:650;
-      margin-top:6px;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-      margin-top:14px;
-    }
-    .stat{
-      border-radius:18px;
+    h1{margin:0; font-size:clamp(26px, 6vw, 36px); letter-spacing:.3px}
+    .sub{margin-top:6px; color:var(--muted); font-weight:700; line-height:1.3}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+    .box{
+      border-radius:18px; padding:12px;
       background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.10);
-      padding:12px;
+      border:1px solid rgba(255,255,255,.10);
     }
-    .stat .k{ color:var(--muted); font-weight:700; font-size:12px; letter-spacing:.3px; text-transform:uppercase; }
-    .stat .v{ font-weight:900; font-size:18px; margin-top:4px; }
-
-    .section{
-      margin-top:12px;
-      padding-top:12px;
-      border-top: 1px solid rgba(255,255,255,.10);
-    }
-    .how{
-      color:var(--muted);
-      font-weight:650;
-      line-height:1.35;
-      font-size:14px;
-    }
-    .how b{ color:var(--txt); }
-    .footerBtns{
-      margin-top:14px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:space-between;
-      align-items:center;
-    }
-    .footerBtns .group{ display:flex; gap:10px; flex-wrap:wrap; }
-
-    /* Shop */
-    .shopGrid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-      margin-top:10px;
-    }
-    .skin{
-      border-radius:18px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.10);
-      padding:12px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .swatch{
-      width:34px; height:34px;
-      border-radius:12px;
-      border: 1px solid rgba(255,255,255,.16);
-      box-shadow: 0 14px 30px rgba(0,0,0,.35);
-      flex: 0 0 auto;
-    }
-    .skin .meta{
-      flex:1 1 auto;
-      min-width:0;
-    }
-    .skin .meta .name{
-      font-weight:900;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-    }
-    .skin .meta .price{
-      color:var(--muted);
-      font-weight:750;
-      margin-top:2px;
-      font-size:12px;
-    }
-    .chip{
-      padding:8px 10px;
-      border-radius:999px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.12);
-      font-weight:900;
-      font-size:12px;
-      letter-spacing:.2px;
-    }
-    .chip.on{ border-color: rgba(124,255,178,.35); color: var(--good); }
-    .chip.lock{ border-color: rgba(255,210,124,.35); color: var(--warn); }
-
-    /* Big touch hint */
-    #touchHint{
-      position:fixed;
-      bottom: calc(max(18px, env(safe-area-inset-bottom)) + 10px);
-      left:50%;
-      transform:translateX(-50%);
-      padding:10px 12px;
-      border-radius:999px;
-      background: rgba(20,25,45,.64);
-      border: 1px solid rgba(255,255,255,.12);
+    .k{color:var(--muted); font-weight:800; font-size:12px; letter-spacing:.3px; text-transform:uppercase}
+    .v{margin-top:4px; font-weight:950; font-size:18px}
+    .row{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; justify-content:space-between}
+    .row .btn{flex:1 1 160px}
+    #hint{
+      position:fixed; left:50%; transform:translateX(-50%);
+      bottom: calc(max(14px, env(safe-area-inset-bottom)) + 10px);
+      padding:10px 12px; border-radius:999px;
+      background: rgba(20,25,45,.65);
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--muted); font-weight:800;
       backdrop-filter: blur(10px);
-      color: var(--muted);
-      font-weight:750;
-      letter-spacing:.2px;
       pointer-events:none;
-      z-index:5;
-      opacity:.0;
-      transition: opacity .25s ease;
+      opacity:0; transition:opacity .25s ease;
     }
-    #touchHint.show{ opacity:1; }
+    #hint.show{opacity:1}
   </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 
-<div id="ui">
-  <div class="row">
-    <div class="leftGroup">
-      <div class="pill" title="Score & Best">
-        <div>
-          <div style="display:flex; gap:10px; align-items:baseline;">
-            <strong id="scoreTxt">0</strong>
-            <small id="bestTxt">Best: 0</small>
-          </div>
-          <small id="comboTxt">Combo: x1.0</small>
-        </div>
-      </div>
-      <div class="pill" title="Coins">
-        <div style="display:flex; gap:10px; align-items:baseline;">
-          <strong id="coinTxt">0</strong>
-          <small>Coins</small>
-        </div>
-      </div>
-    </div>
-
-    <div class="rightGroup">
-      <button class="btn icon secondary" id="btnShop" aria-label="Shop">🛍️</button>
-      <button class="btn icon secondary" id="btnSound" aria-label="Sound">🔊</button>
-      <button class="btn icon secondary" id="btnVibe" aria-label="Vibration">📳</button>
-      <button class="btn icon warn" id="btnPause" aria-label="Pause">⏸️</button>
-    </div>
+<div id="hud">
+  <div class="pill"><span id="score">0</span> <small id="best">Best: 0</small></div>
+  <div style="display:flex; gap:10px;">
+    <div class="pill"><span id="coins">0</span> <small>Stars</small></div>
+    <button class="btn" id="pause">⏸️</button>
   </div>
 </div>
 
-<div id="toastWrap"></div>
-<div id="touchHint">Zieh den Finger / tippe: <b>ausweichen</b> • Sammel: <b>Coins</b> • Powerups: <b>Shield / Slow / Magnet</b></div>
+<div id="hint">Tippe irgendwo: <b>Seite wechseln</b> • Sammel ⭐ • Powerups: 🛡️ ⏳</div>
 
-<!-- MENU -->
-<div class="screen show" id="screenMenu">
+<div id="screen">
   <div class="card">
-    <div class="title">
-      <div>
-        <h1>NEON GAP RUN</h1>
-        <div class="subtitle">Ein-Finger-Arcade: durch die Lücken — werde schneller, sammle Coins, knallige Powerups.</div>
-      </div>
-      <div class="chip" id="skinChip">Skin: Default</div>
-    </div>
-
+    <h1>FLIP DODGE</h1>
+    <div class="sub">Ultra-einfach: <b>ein Tap</b> → du wechselst die Seite. Weiche Hindernissen aus & sammle ⭐.</div>
     <div class="grid">
-      <div class="stat">
-        <div class="k">Best Score</div>
-        <div class="v" id="menuBest">0</div>
-      </div>
-      <div class="stat">
-        <div class="k">Coins</div>
-        <div class="v" id="menuCoins">0</div>
-      </div>
+      <div class="box"><div class="k">Best Score</div><div class="v" id="mBest">0</div></div>
+      <div class="box"><div class="k">Stars</div><div class="v" id="mCoins">0</div></div>
     </div>
-
-    <div class="section">
-      <div class="how">
-        <b>Wie spielen:</b> Halte/ziehe deinen Finger, um die Kugel zu steuern. Bleib <b>in der Lücke</b>.
-        Sammle <b>Coins</b> für Skins und baue eine <b>Combo</b> auf. Powerups geben dir kurz Vorteile.
-      </div>
+    <div class="row">
+      <button class="btn" id="play">▶️ Spielen</button>
+      <button class="btn" id="reset">🧹 Reset</button>
     </div>
-
-    <div class="footerBtns">
-      <div class="group">
-        <button class="btn good" id="btnPlay">▶️ Spielen</button>
-        <button class="btn secondary" id="btnHow">❔ Tipps</button>
-      </div>
-      <div class="group">
-        <button class="btn secondary" id="btnReset">🧹 Reset</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- SHOP -->
-<div class="screen" id="screenShop">
-  <div class="card">
-    <div class="title">
-      <div>
-        <h1>Shop & Skins</h1>
-        <div class="subtitle">Coins sammeln → Skins freischalten. Skin wirkt nur optisch.</div>
-      </div>
-      <button class="btn icon secondary" id="btnCloseShop" aria-label="Close">✖️</button>
-    </div>
-
-    <div class="grid">
-      <div class="stat">
-        <div class="k">Deine Coins</div>
-        <div class="v" id="shopCoins">0</div>
-      </div>
-      <div class="stat">
-        <div class="k">Aktiver Skin</div>
-        <div class="v" id="shopActiveSkin">Default</div>
-      </div>
-    </div>
-
-    <div class="shopGrid" id="shopGrid"></div>
-
-    <div class="section">
-      <div class="how">
-        Tipp: Mehr Coins bekommst du mit hoher <b>Combo</b>. Powerups helfen dabei.
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- HOW / TIPS -->
-<div class="screen" id="screenHow">
-  <div class="card">
-    <div class="title">
-      <div>
-        <h1>Tipps</h1>
-        <div class="subtitle">So kommst du richtig weit.</div>
-      </div>
-      <button class="btn icon secondary" id="btnCloseHow" aria-label="Close">✖️</button>
-    </div>
-
-    <div class="section">
-      <div class="how">
-        • Spiele ruhig: <b>nicht hektisch</b> hin und her.<br/>
-        • Bau eine Combo: sammle Coins <b>ohne lange Pause</b> → Multiplikator steigt.<br/>
-        • <b>Shield</b> rettet dich einmal, <b>Slow</b> macht Lücken leichter, <b>Magnet</b> zieht Coins an.<br/>
-        • Wenn’s schnell wird: bleib eher <b>in der Mitte</b> und korrigiere kurz.
-      </div>
-    </div>
-
-    <div class="footerBtns">
-      <div class="group">
-        <button class="btn good" id="btnHowPlay">▶️ Direkt spielen</button>
-      </div>
+    <div class="sub" style="margin-top:10px;">
+      Powerups: 🛡️ schützt 1x • ⏳ wird kurz langsamer. Je länger du lebst, desto schneller wird’s.
     </div>
   </div>
 </div>
@@ -428,970 +123,357 @@
 <script>
 (() => {
   "use strict";
-
-  // ---------- Helpers ----------
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const lerp = (a, b, t) => a + (b - a) * t;
-  const now = () => performance.now();
-  const rnd = (a, b) => a + Math.random() * (b - a);
-
-  // ---------- DOM ----------
   const canvas = document.getElementById("c");
-  const ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
+  const ctx = canvas.getContext("2d", { alpha:true, desynchronized:true });
 
-  const scoreTxt = document.getElementById("scoreTxt");
-  const bestTxt  = document.getElementById("bestTxt");
-  const coinTxt  = document.getElementById("coinTxt");
-  const comboTxt = document.getElementById("comboTxt");
+  const $score = document.getElementById("score");
+  const $best  = document.getElementById("best");
+  const $coins = document.getElementById("coins");
+  const $pause = document.getElementById("pause");
 
-  const screenMenu = document.getElementById("screenMenu");
-  const screenShop = document.getElementById("screenShop");
-  const screenHow  = document.getElementById("screenHow");
+  const screen = document.getElementById("screen");
+  const hint   = document.getElementById("hint");
+  const mBest  = document.getElementById("mBest");
+  const mCoins = document.getElementById("mCoins");
+  const btnPlay = document.getElementById("play");
+  const btnReset = document.getElementById("reset");
 
-  const menuBest  = document.getElementById("menuBest");
-  const menuCoins = document.getElementById("menuCoins");
-  const btnPlay   = document.getElementById("btnPlay");
-  const btnHow    = document.getElementById("btnHow");
-  const btnReset  = document.getElementById("btnReset");
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  const rnd = (a,b)=>a+Math.random()*(b-a);
 
-  const btnShop   = document.getElementById("btnShop");
-  const btnCloseShop = document.getElementById("btnCloseShop");
-  const shopCoins = document.getElementById("shopCoins");
-  const shopActiveSkin = document.getElementById("shopActiveSkin");
-  const shopGrid = document.getElementById("shopGrid");
+  const KEY="flip_dodge_v1";
+  const data = (()=>{ try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch{return{}} })();
+  let best = Number(data.best||0);
+  let stars = Number(data.stars||0);
 
-  const btnCloseHow = document.getElementById("btnCloseHow");
-  const btnHowPlay  = document.getElementById("btnHowPlay");
+  let W=0,H=0,DPR=1;
+  function resize(){
+    DPR=Math.min(2.25, devicePixelRatio||1);
+    W=innerWidth; H=innerHeight;
+    canvas.width=Math.floor(W*DPR); canvas.height=Math.floor(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  addEventListener("resize", resize, {passive:true});
+  resize();
 
-  const btnSound = document.getElementById("btnSound");
-  const btnVibe  = document.getElementById("btnVibe");
-  const btnPause = document.getElementById("btnPause");
-
-  const toastWrap = document.getElementById("toastWrap");
-  const touchHint = document.getElementById("touchHint");
-  const skinChip  = document.getElementById("skinChip");
-
-  // ---------- Storage ----------
-  const KEY = "neon_gap_run_v1";
-  const load = () => {
-    try { return JSON.parse(localStorage.getItem(KEY) || "{}"); }
-    catch { return {}; }
-  };
-  const save = (obj) => localStorage.setItem(KEY, JSON.stringify(obj));
-
-  // ---------- Audio (tiny synth) ----------
-  let audioCtx = null;
-  const SFX = {
-    enabled: true,
-    init(){
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    },
-    beep(freq=440, dur=0.06, type="sine", gain=0.06){
-      if (!SFX.enabled) return;
-      try{
-        SFX.init();
-        const t0 = audioCtx.currentTime;
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        o.type = type;
-        o.frequency.setValueAtTime(freq, t0);
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-        o.connect(g);
-        g.connect(audioCtx.destination);
-        o.start(t0);
-        o.stop(t0 + dur + 0.02);
-      }catch(_){}
-    },
-    coin(){ SFX.beep(880, 0.055, "triangle", 0.07); },
-    power(){ SFX.beep(660, 0.07, "sawtooth", 0.06); },
-    hit(){  SFX.beep(120, 0.14, "square", 0.08); },
-    ui(){   SFX.beep(520, 0.04, "triangle", 0.05); }
+  const S = {
+    running:false, paused:false,
+    score:0,
+    speed:420,
+    spawnT:0,
+    laneX:[0,0],
+    lane:0, // 0 left, 1 right
+    shield:0,
+    slow:0,
+    obstacles:[],
+    pickups:[],
+    particles:[]
   };
 
-  // ---------- Vibration ----------
-  let vibeOn = true;
-  const vibrate = (ms) => {
-    if (!vibeOn) return;
-    if (navigator.vibrate) navigator.vibrate(ms);
-  };
+  const P = { x:0,y:0,r:16, vx:0 };
 
-  // ---------- Game Config ----------
-  const skins = [
-    { id:"default", name:"Default", price:0,  c1:"#74d8ff", c2:"#ff6df6" },
-    { id:"mint",    name:"Mint Pop", price:120, c1:"#7CFFB2", c2:"#74d8ff" },
-    { id:"sunset",  name:"Sunset",   price:220, c1:"#FFD27C", c2:"#FF5A7A" },
-    { id:"violet",  name:"Violet",   price:360, c1:"#a98bff", c2:"#74d8ff" },
-    { id:"ember",   name:"Ember",    price:520, c1:"#ff7a59", c2:"#ffd27c" },
-    { id:"ghost",   name:"Ghost",    price:800, c1:"#ffffff", c2:"#a98bff" },
-  ];
-
-  const state = {
-    w: 0, h: 0, dpr: 1,
-    running: false,
-    paused: false,
-    inMenu: true,
-
-    score: 0,
-    best: 0,
-    coins: 0,
-
-    combo: 1.0,
-    comboTime: 0,
-    comboMax: 1.0,
-
-    speed: 360,          // base px/s
-    speedMul: 1.0,
-    gapW: 180,           // will scale
-    thickness: 44,
-    spacing: 160,
-    spawnY: 0,
-
-    shake: 0,
-    shakeX: 0,
-    shakeY: 0,
-
-    power: {
-      shield: 0,
-      slow: 0,
-      magnet: 0,
-    },
-
-    particles: [],
-    rows: [],
-    pickups: [], // coins + powerups
-  };
-
-  const player = {
-    x: 0, y: 0, r: 16,
-    tx: 0,
-    vx: 0,
-    trail: [],
-    skin: skins[0],
-  };
-
-  // ---------- Persistence init ----------
-  const data = load();
-  state.best = Number(data.best || 0);
-  state.coins = Number(data.coins || 0);
-  const unlocked = new Set(Array.isArray(data.unlocked) ? data.unlocked : ["default"]);
-  if (!unlocked.has("default")) unlocked.add("default");
-
-  const settings = data.settings || {};
-  SFX.enabled = settings.sound !== false;
-  vibeOn = settings.vibe !== false;
-
-  const savedSkin = data.skin || "default";
-  const skinObj = skins.find(s => s.id === savedSkin) || skins[0];
-  if (unlocked.has(skinObj.id)) player.skin = skinObj;
-
-  // ---------- UI update ----------
-  function setScreen(which){
-    screenMenu.classList.toggle("show", which === "menu");
-    screenShop.classList.toggle("show", which === "shop");
-    screenHow.classList.toggle("show", which === "how");
-    state.inMenu = (which === "menu");
+  function save(){
+    localStorage.setItem(KEY, JSON.stringify({best, stars}));
   }
 
-  function toast(msg, sub=""){
-    const t = document.createElement("div");
-    t.className = "toast";
-    t.innerHTML = sub ? `${msg} <small>${sub}</small>` : msg;
-    toastWrap.appendChild(t);
-    setTimeout(() => { t.remove(); }, 1900);
+  function hud(){
+    $score.textContent = Math.floor(S.score);
+    $best.textContent  = `Best: ${Math.floor(best)}`;
+    $coins.textContent = Math.floor(stars);
+    mBest.textContent  = Math.floor(best);
+    mCoins.textContent = Math.floor(stars);
+    $pause.textContent = S.paused ? "▶️" : "⏸️";
   }
 
-  function saveAll(){
-    save({
-      best: state.best,
-      coins: state.coins,
-      unlocked: Array.from(unlocked),
-      skin: player.skin.id,
-      settings: { sound: SFX.enabled, vibe: vibeOn }
+  function toastHint(){
+    hint.classList.add("show");
+    setTimeout(()=>hint.classList.remove("show"), 1200);
+  }
+
+  function resetRun(){
+    S.score=0;
+    S.speed=420;
+    S.spawnT=0;
+    S.lane=0;
+    S.shield=0;
+    S.slow=0;
+    S.obstacles.length=0;
+    S.pickups.length=0;
+    S.particles.length=0;
+
+    P.y = H*0.78;
+    P.r = clamp(Math.min(W,H)*0.028, 12, 20);
+    S.laneX[0]= W*0.30;
+    S.laneX[1]= W*0.70;
+    P.x = S.laneX[S.lane];
+    P.vx = 0;
+  }
+
+  function start(){
+    resetRun();
+    S.running=true;
+    S.paused=false;
+    screen.style.display="none";
+    toastHint();
+    hud();
+  }
+
+  function gameOver(){
+    S.running=false;
+    S.paused=false;
+    if (S.score > best) best = S.score;
+    save();
+    hud();
+    screen.style.display="flex";
+  }
+
+  function flip(){
+    if (!S.running){
+      start();
+      return;
+    }
+    if (S.paused) return;
+    S.lane = 1 - S.lane;
+    // quick snap feeling
+    P.vx += (S.laneX[S.lane]-P.x) * 12;
+    if (navigator.vibrate) navigator.vibrate(10);
+  }
+
+  // Touch / Click anywhere to flip
+  addEventListener("pointerdown", (e) => {
+    // ignore clicks on pause button
+    if (e.target === $pause) return;
+    flip();
+  });
+
+  $pause.addEventListener("click", () => {
+    if (!S.running) return;
+    S.paused = !S.paused;
+    hud();
+  });
+
+  btnPlay.addEventListener("click", start);
+  btnReset.addEventListener("click", () => {
+    if (confirm("Reset Best & Stars?")){
+      best=0; stars=0; save(); hud();
+    }
+  });
+
+  // spawns
+  function spawnObstacle(){
+    const lane = Math.random()<0.5?0:1;
+    const size = clamp(P.r*1.8 + rnd(-4, 8), P.r*1.5, P.r*2.3);
+    S.obstacles.push({
+      lane,
+      x: S.laneX[lane],
+      y: -40,
+      r: size,
+      kind: (Math.random()<0.22 ? "big" : "norm")
+    });
+  }
+  function spawnPickup(){
+    const lane = Math.random()<0.5?0:1;
+    const kindRoll = Math.random();
+    const kind = kindRoll < 0.72 ? "star" : (kindRoll < 0.86 ? "shield" : "slow");
+    S.pickups.push({
+      lane,
+      x: S.laneX[lane],
+      y: -40,
+      r: P.r*0.9,
+      kind,
+      taken:false
     });
   }
 
-  function refreshHUD(){
-    scoreTxt.textContent = Math.floor(state.score).toString();
-    bestTxt.textContent  = `Best: ${Math.floor(state.best)}`;
-    coinTxt.textContent  = Math.floor(state.coins).toString();
-
-    comboTxt.textContent = `Combo: x${state.combo.toFixed(1)}`;
-    menuBest.textContent = Math.floor(state.best).toString();
-    menuCoins.textContent = Math.floor(state.coins).toString();
-    shopCoins.textContent = Math.floor(state.coins).toString();
-    shopActiveSkin.textContent = player.skin.name;
-    skinChip.textContent = `Skin: ${player.skin.name}`;
-
-    btnSound.textContent = SFX.enabled ? "🔊" : "🔇";
-    btnVibe.textContent  = vibeOn ? "📳" : "🚫";
-    btnPause.textContent = state.paused ? "▶️" : "⏸️";
-  }
-
-  // ---------- Shop UI ----------
-  function buildShop(){
-    shopGrid.innerHTML = "";
-    for (const s of skins){
-      const el = document.createElement("div");
-      el.className = "skin";
-
-      const sw = document.createElement("div");
-      sw.className = "swatch";
-      sw.style.background = `linear-gradient(135deg, ${s.c1}, ${s.c2})`;
-
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      meta.innerHTML = `<div class="name">${s.name}</div><div class="price">${s.price === 0 ? "Kostenlos" : s.price + " Coins"}</div>`;
-
-      const chip = document.createElement("div");
-      const isUnlocked = unlocked.has(s.id);
-      const isActive = player.skin.id === s.id;
-
-      if (isActive){
-        chip.className = "chip on";
-        chip.textContent = "Aktiv";
-      } else if (isUnlocked){
-        chip.className = "chip";
-        chip.textContent = "Wählen";
-      } else {
-        chip.className = "chip lock";
-        chip.textContent = "Kaufen";
-      }
-
-      el.appendChild(sw);
-      el.appendChild(meta);
-      el.appendChild(chip);
-
-      el.addEventListener("click", () => {
-        SFX.ui();
-        if (player.skin.id === s.id) return;
-
-        if (unlocked.has(s.id)){
-          player.skin = s;
-          toast("Skin aktiviert", s.name);
-          refreshHUD();
-          saveAll();
-          buildShop();
-          return;
-        }
-
-        if (state.coins >= s.price){
-          state.coins -= s.price;
-          unlocked.add(s.id);
-          player.skin = s;
-          toast("Gekauft!", `${s.name} — -${s.price} Coins`);
-          vibrate(18);
-          refreshHUD();
-          saveAll();
-          buildShop();
-        } else {
-          toast("Zu wenig Coins", `Du brauchst ${s.price - state.coins} mehr.`);
-          vibrate(8);
-        }
-      });
-
-      shopGrid.appendChild(el);
-    }
-  }
-
-  // ---------- Resize / DPR ----------
-  function resize(){
-    const dpr = Math.min(2.25, window.devicePixelRatio || 1);
-    state.dpr = dpr;
-    state.w = Math.floor(innerWidth);
-    state.h = Math.floor(innerHeight);
-
-    canvas.width  = Math.floor(state.w * dpr);
-    canvas.height = Math.floor(state.h * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    // scale gameplay to screen
-    const base = Math.min(state.w, state.h);
-    player.r = clamp(base * 0.022, 12, 20);
-
-    state.thickness = clamp(base * 0.06, 34, 54);
-    state.spacing   = clamp(base * 0.22, 120, 200);
-    state.gapW      = clamp(base * 0.38, 150, 240);
-
-    player.y = state.h * 0.78;
-    if (!state.running){
-      player.x = state.w * 0.5;
-      player.tx = player.x;
-    } else {
-      player.x = clamp(player.x, player.r + 6, state.w - player.r - 6);
-      player.tx = clamp(player.tx, player.r + 6, state.w - player.r - 6);
-    }
-  }
-  addEventListener("resize", resize, { passive:true });
-
-  // ---------- Input ----------
-  let pointerActive = false;
-
-  function setTargetFromClientX(cx){
-    const x = clamp(cx, 0, state.w);
-    player.tx = clamp(x, player.r + 6, state.w - player.r - 6);
-  }
-
-  function onPointerDown(e){
-    pointerActive = true;
-    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
-    setTargetFromClientX(e.clientX);
-    if (!state.running && state.inMenu){
-      // small hint that touch works
-      touchHint.classList.add("show");
-      setTimeout(()=>touchHint.classList.remove("show"), 900);
-    }
-  }
-  function onPointerMove(e){
-    if (!pointerActive) return;
-    setTargetFromClientX(e.clientX);
-  }
-  function onPointerUp(){
-    pointerActive = false;
-  }
-
-  canvas.addEventListener("pointerdown", onPointerDown);
-  canvas.addEventListener("pointermove", onPointerMove);
-  canvas.addEventListener("pointerup", onPointerUp);
-  canvas.addEventListener("pointercancel", onPointerUp);
-
-  // prevent double-tap zoom
-  let lastTouch = 0;
-  document.addEventListener("touchend", (e) => {
-    const t = Date.now();
-    if (t - lastTouch < 250) e.preventDefault();
-    lastTouch = t;
-  }, { passive:false });
-
-  // ---------- Particles ----------
-  function spawnBurst(x,y, n=10, sp=220, life=0.55, size=2.2){
-    for (let i=0;i<n;i++){
-      const a = Math.random()*Math.PI*2;
-      const v = rnd(sp*0.35, sp);
-      state.particles.push({
-        x,y,
-        vx: Math.cos(a)*v,
-        vy: Math.sin(a)*v,
-        life, t:0,
-        size: rnd(size*0.7, size*1.4),
-      });
-    }
-  }
-
-  // ---------- Rows & Pickups ----------
-  function resetRun(){
-    state.score = 0;
-    state.combo = 1.0;
-    state.comboTime = 0;
-    state.comboMax = 1.0;
-
-    state.speed = 360;
-    state.speedMul = 1.0;
-
-    state.power.shield = 0;
-    state.power.slow = 0;
-    state.power.magnet = 0;
-
-    state.shake = 0;
-    state.rows.length = 0;
-    state.pickups.length = 0;
-    state.particles.length = 0;
-
-    player.x = state.w*0.5;
-    player.tx = player.x;
-    player.vx = 0;
-    player.trail.length = 0;
-
-    // seed initial rows
-    state.spawnY = -state.spacing;
-    for (let i=0;i<8;i++){
-      spawnRow(state.spawnY);
-      state.spawnY -= state.spacing;
-    }
-  }
-
-  function spawnRow(y){
-    const margin = player.r*1.6 + 20;
-    const gapMinW = Math.max(player.r*5.2, state.gapW * 0.72);
-    const gapMaxW = state.gapW;
-    const gapW = rnd(gapMinW, gapMaxW);
-
-    const gapX = rnd(margin, state.w - margin - gapW);
-
-    const row = {
-      y,
-      gapX,
-      gapW,
-      t: state.thickness,
-      passed: false
-    };
-    state.rows.push(row);
-
-    // coin chance
-    const coinChance = 0.85;
-    if (Math.random() < coinChance){
-      const cx = rnd(gapX + player.r, gapX + gapW - player.r);
-      state.pickups.push({ kind:"coin", x:cx, y:y + row.t*0.5, r: player.r*0.52, vy:0, taken:false });
-    }
-
-    // powerup rare
-    const p = Math.random();
-    if (p < 0.14){
-      const kinds = ["shield","slow","magnet"];
-      const kind = kinds[Math.floor(Math.random()*kinds.length)];
-      const px = rnd(gapX + player.r, gapX + gapW - player.r);
-      state.pickups.push({ kind, x:px, y:y + row.t*0.5, r: player.r*0.62, vy:0, taken:false });
-    }
-  }
-
-  // ---------- Collision helpers ----------
-  function circleHit(ax,ay,ar, bx,by,br){
+  function circleHit(ax,ay,ar,bx,by,br){
     const dx=ax-bx, dy=ay-by;
     const rr=ar+br;
-    return dx*dx + dy*dy <= rr*rr;
+    return dx*dx+dy*dy <= rr*rr;
   }
 
-  // ---------- Achievements (mini) ----------
-  const achieved = new Set(Array.isArray(data.achieved) ? data.achieved : []);
-  function unlockAch(id, title){
-    if (achieved.has(id)) return;
-    achieved.add(id);
-    toast("🏆 Erfolg!", title);
-    vibrate(22);
-    // also reward small coins
-    state.coins += 25;
-    save({
-      best: state.best,
-      coins: state.coins,
-      unlocked: Array.from(unlocked),
-      skin: player.skin.id,
-      settings: { sound: SFX.enabled, vibe: vibeOn },
-      achieved: Array.from(achieved)
-    });
-  }
-
-  // ---------- Game flow ----------
-  function startGame(){
-    resetRun();
-    state.running = true;
-    state.paused = false;
-    setScreen(null);
-    refreshHUD();
-    touchHint.classList.add("show");
-    setTimeout(()=>touchHint.classList.remove("show"), 1400);
-    toast("Viel Spaß!", "Bleib in der Lücke.");
-  }
-
-  function endGame(reason="crash"){
-    state.running = false;
-    state.paused = false;
-
-    // best
-    if (state.score > state.best){
-      state.best = state.score;
-      toast("Neuer Bestscore!", Math.floor(state.best).toString());
-    } else {
-      toast("Game Over", `Score: ${Math.floor(state.score)}`);
-    }
-
-    // save
-    saveAll();
-    menuBest.textContent = Math.floor(state.best).toString();
-    menuCoins.textContent = Math.floor(state.coins).toString();
-    refreshHUD();
-
-    setTimeout(() => setScreen("menu"), 350);
-
-    if (reason === "crash"){
-      unlockAch("first_crash", "Erster Run beendet (+25 Coins)");
+  function burst(x,y,n=14){
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2;
+      const v=rnd(120,360);
+      S.particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,t:0,life:rnd(0.35,0.75),r:rnd(1.5,3.2)});
     }
   }
 
-  // ---------- Draw ----------
-  function drawBackground(t){
-    // subtle moving stars
-    const w=state.w, h=state.h;
+  // main loop
+  let last = performance.now();
+  function loop(t){
+    const dt = Math.min(0.033, (t-last)/1000);
+    last=t;
 
-    // gradient fog
-    const g = ctx.createLinearGradient(0,0,0,h);
-    g.addColorStop(0, "rgba(255,255,255,0.00)");
-    g.addColorStop(1, "rgba(0,0,0,0.25)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0,0,w,h);
+    // draw bg + lanes
+    ctx.clearRect(0,0,W,H);
 
-    // stars
-    const count = Math.floor((w*h)/90000);
-    for (let i=0;i<count;i++){
-      const sx = (i*997 + (t*0.03)) % w;
-      const sy = (i*571 + (t*0.02)) % h;
-      const r = 1 + (i%3)*0.3;
-      ctx.globalAlpha = 0.18;
-      ctx.beginPath();
-      ctx.arc(sx, sy, r, 0, Math.PI*2);
-      ctx.fillStyle = "white";
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-  }
+    // subtle vignette
+    const vg = ctx.createRadialGradient(W*0.5,H*0.45, 50, W*0.5,H*0.6, Math.max(W,H)*0.7);
+    vg.addColorStop(0,"rgba(255,255,255,0.02)");
+    vg.addColorStop(1,"rgba(0,0,0,0.25)");
+    ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
 
-  function drawRow(row){
-    const y = row.y;
-    const t = row.t;
-
-    // neon blocks with glow
-    const leftW = row.gapX;
-    const rightX = row.gapX + row.gapW;
-    const rightW = state.w - rightX;
-
-    // glow pass
-    ctx.save();
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = "rgba(120,216,255,.35)";
-    ctx.globalAlpha = 0.9;
-
-    // left block
-    if (leftW > 0){
-      const lg = ctx.createLinearGradient(0,y, leftW, y+t);
-      lg.addColorStop(0, "rgba(116,216,255,.10)");
-      lg.addColorStop(1, "rgba(255,109,246,.18)");
-      ctx.fillStyle = lg;
-      ctx.fillRect(0, y, leftW, t);
-    }
-
-    // right block
-    if (rightW > 0){
-      const rg = ctx.createLinearGradient(rightX,y, state.w, y+t);
-      rg.addColorStop(0, "rgba(255,109,246,.14)");
-      rg.addColorStop(1, "rgba(169,139,255,.16)");
-      ctx.fillStyle = rg;
-      ctx.fillRect(rightX, y, rightW, t);
-    }
-
-    ctx.restore();
-
-    // thin edge highlights
-    ctx.globalAlpha = 0.7;
-    ctx.fillStyle = "rgba(255,255,255,.12)";
-    ctx.fillRect(0, y, state.w, 1.2);
-    ctx.fillRect(0, y+t-1.2, state.w, 1.2);
-    ctx.globalAlpha = 1;
-  }
-
-  function drawPickup(p, t){
-    if (p.taken) return;
-    const pulse = 1 + Math.sin(t*0.01 + p.x*0.02) * 0.07;
-
-    let cA = "rgba(124,255,178,.95)";
-    let cB = "rgba(116,216,255,.95)";
-    let emoji = "●";
-    if (p.kind === "coin"){ cA="rgba(255,210,124,.98)"; cB="rgba(255,90,122,.75)"; emoji="⟡"; }
-    if (p.kind === "shield"){ cA="rgba(116,216,255,.95)"; cB="rgba(169,139,255,.85)"; emoji="⛨"; }
-    if (p.kind === "slow"){ cA="rgba(255,210,124,.95)"; cB="rgba(116,216,255,.85)"; emoji="⏳"; }
-    if (p.kind === "magnet"){ cA="rgba(255,109,246,.95)"; cB="rgba(116,216,255,.85)"; emoji="🧲"; }
-
-    ctx.save();
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = cA;
-    const g = ctx.createRadialGradient(p.x, p.y, 2, p.x, p.y, p.r*2.2);
-    g.addColorStop(0, cA);
-    g.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.globalAlpha = 0.9;
-    ctx.fillStyle = g;
+    // lane lines
+    ctx.globalAlpha=0.7;
+    ctx.strokeStyle="rgba(255,255,255,0.10)";
+    ctx.lineWidth=2;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r*2.2*pulse, 0, Math.PI*2);
-    ctx.fill();
-
-    // core
-    const g2 = ctx.createLinearGradient(p.x-p.r, p.y-p.r, p.x+p.r, p.y+p.r);
-    g2.addColorStop(0, cA);
-    g2.addColorStop(1, cB);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = g2;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r*pulse, 0, Math.PI*2);
-    ctx.fill();
-
-    // icon
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = "rgba(15,18,30,.85)";
-    ctx.font = `900 ${Math.floor(p.r*1.35)}px ui-sans-serif, system-ui`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(emoji, p.x, p.y+0.5);
-
-    ctx.restore();
-  }
-
-  function drawPlayer(t){
-    // trail
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    for (let i=0;i<player.trail.length;i++){
-      const tr = player.trail[i];
-      const a = (i / player.trail.length);
-      ctx.globalAlpha = (1-a) * 0.28;
-      ctx.shadowBlur = 16;
-      ctx.shadowColor = player.skin.c1;
-      const g = ctx.createRadialGradient(tr.x, tr.y, 1, tr.x, tr.y, player.r*2.0);
-      g.addColorStop(0, player.skin.c2);
-      g.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(tr.x, tr.y, player.r*1.8*(1-a*0.4), 0, Math.PI*2);
-      ctx.fill();
-    }
-    ctx.restore();
-
-    // player ball with gradient
-    ctx.save();
-    ctx.shadowBlur = 28;
-    ctx.shadowColor = state.power.shield > 0 ? "rgba(116,216,255,.75)" : "rgba(255,109,246,.55)";
-
-    const g = ctx.createLinearGradient(player.x-player.r, player.y-player.r, player.x+player.r, player.y+player.r);
-    g.addColorStop(0, player.skin.c1);
-    g.addColorStop(1, player.skin.c2);
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
-    ctx.fill();
-
-    // highlight
-    ctx.shadowBlur = 0;
-    ctx.globalAlpha = 0.35;
-    ctx.fillStyle = "white";
-    ctx.beginPath();
-    ctx.arc(player.x - player.r*0.25, player.y - player.r*0.25, player.r*0.45, 0, Math.PI*2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-
-    // shield ring
-    if (state.power.shield > 0){
-      const pulse = 1 + Math.sin(t*0.02)*0.05;
-      ctx.strokeStyle = "rgba(116,216,255,.75)";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(player.x, player.y, player.r*1.55*pulse, 0, Math.PI*2);
-      ctx.stroke();
-    }
-
-    ctx.restore();
-  }
-
-  function drawParticles(dt){
-    for (let i=state.particles.length-1;i>=0;i--){
-      const p = state.particles[i];
-      p.t += dt;
-      const k = p.t / p.life;
-      if (k >= 1){
-        state.particles.splice(i,1);
-        continue;
-      }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vx *= 0.985;
-      p.vy *= 0.985;
-
-      ctx.globalAlpha = (1-k) * 0.8;
-      ctx.fillStyle = "rgba(255,255,255,.85)";
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size*(1-k*0.3), 0, Math.PI*2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  // ---------- Update ----------
-  function applyPowerups(dt){
-    // tick down
-    state.power.shield = Math.max(0, state.power.shield - dt);
-    state.power.slow   = Math.max(0, state.power.slow   - dt);
-    state.power.magnet = Math.max(0, state.power.magnet - dt);
-
-    // slow controls speed multiplier
-    if (state.power.slow > 0){
-      state.speedMul = lerp(state.speedMul, 0.72, 0.06);
-    } else {
-      state.speedMul = lerp(state.speedMul, 1.0, 0.04);
-    }
-  }
-
-  function update(dt, t){
-    if (!state.running || state.paused) return;
-
-    // difficulty ramp
-    state.speed += dt * 10.5; // gets faster slowly
-    const speed = state.speed * state.speedMul;
-
-    // move player smoothly towards target
-    const accel = 38;
-    const dx = player.tx - player.x;
-    player.vx = lerp(player.vx, dx * accel, 0.10);
-    player.x += player.vx * dt;
-
-    // clamp
-    player.x = clamp(player.x, player.r + 6, state.w - player.r - 6);
-
-    // trail
-    player.trail.unshift({ x:player.x, y:player.y });
-    if (player.trail.length > 14) player.trail.pop();
-
-    // combo decay
-    state.comboTime -= dt;
-    if (state.comboTime <= 0){
-      state.combo = lerp(state.combo, 1.0, 0.08);
-    }
-
-    applyPowerups(dt);
-
-    // rows move down (they are spawned upwards, we move towards +y)
-    for (let i=0;i<state.rows.length;i++){
-      const r = state.rows[i];
-      r.y += speed * dt;
-
-      // scoring when passed player
-      if (!r.passed && r.y > player.y){
-        r.passed = true;
-        state.score += 10;
-        // tiny screen juice
-        state.shake = Math.min(10, state.shake + 0.9);
-      }
-    }
-
-    // spawn new rows when last row passes certain threshold
-    // keep about 10-12 rows
-    const topMost = Math.min(...state.rows.map(r=>r.y));
-    while (topMost > -state.spacing*2 && state.rows.length < 12){
-      // no-op (should not happen)
-      break;
-    }
-
-    // Remove rows that left screen
-    state.rows = state.rows.filter(r => r.y < state.h + r.t + 10);
-
-    // ensure enough rows: spawn above
-    while (state.rows.length < 10){
-      const minY = state.rows.length ? Math.min(...state.rows.map(r=>r.y)) : 0;
-      spawnRow(minY - state.spacing);
-    }
-
-    // move pickups with rows speed
-    for (const p of state.pickups){
-      if (p.taken) continue;
-      p.y += speed * dt;
-
-      // magnet: pull coins
-      if (state.power.magnet > 0 && p.kind === "coin"){
-        const pullR = player.r * 10;
-        const ddx = player.x - p.x;
-        const ddy = player.y - p.y;
-        const d2 = ddx*ddx + ddy*ddy;
-        if (d2 < pullR*pullR){
-          const d = Math.sqrt(d2) || 1;
-          const pull = (1 - d/pullR) * 780;
-          p.x += (ddx/d) * pull * dt;
-          p.y += (ddy/d) * pull * dt;
-        }
-      }
-
-      // collect
-      if (circleHit(player.x, player.y, player.r*0.95, p.x, p.y, p.r)){
-        p.taken = true;
-
-        if (p.kind === "coin"){
-          const gain = Math.max(1, Math.floor(1 * state.combo));
-          state.coins += gain;
-
-          // combo boost
-          state.comboTime = 1.15;
-          state.combo = clamp(state.combo + 0.12, 1.0, 3.5);
-          state.comboMax = Math.max(state.comboMax, state.combo);
-
-          state.score += 2 * state.combo;
-          spawnBurst(p.x,p.y, 10, 260, 0.55, 2.2);
-          SFX.coin();
-          vibrate(8);
-
-          if (state.coins >= 100) unlockAch("coins_100", "100 Coins gesammelt (+25 Coins)");
-          if (state.comboMax >= 2.5) unlockAch("combo_25", "Combo x2.5 erreicht (+25 Coins)");
-        } else {
-          // powerups
-          if (p.kind === "shield"){
-            state.power.shield = Math.max(state.power.shield, 3.2);
-            toast("Powerup: Shield", "Ein Treffer frei.");
-          } else if (p.kind === "slow"){
-            state.power.slow = Math.max(state.power.slow, 3.4);
-            toast("Powerup: Slow", "Kurz langsamer.");
-          } else if (p.kind === "magnet"){
-            state.power.magnet = Math.max(state.power.magnet, 5.0);
-            toast("Powerup: Magnet", "Coins kommen zu dir.");
-          }
-          spawnBurst(p.x,p.y, 14, 320, 0.65, 2.4);
-          SFX.power();
-          vibrate(14);
-        }
-        refreshHUD();
-      }
-    }
-
-    // cleanup pickups
-    state.pickups = state.pickups.filter(p => !p.taken && p.y < state.h + 80);
-
-    // collision with rows (blocks)
-    for (const r of state.rows){
-      // check overlap in y-range
-      if (r.y <= player.y + player.r && r.y + r.t >= player.y - player.r){
-        // if player circle is not fully within gap -> hit
-        const left = r.gapX;
-        const right = r.gapX + r.gapW;
-        const pxL = player.x - player.r*0.92;
-        const pxR = player.x + player.r*0.92;
-
-        const inside = (pxL >= left) && (pxR <= right);
-        if (!inside){
-          if (state.power.shield > 0){
-            // consume shield and push player towards center of gap
-            state.power.shield = 0;
-            state.shake = 22;
-            spawnBurst(player.x, player.y, 26, 420, 0.7, 2.7);
-            SFX.hit();
-            vibrate(40);
-            // nudge into gap
-            const center = (left + right) * 0.5;
-            player.x = lerp(player.x, center, 0.85);
-            player.tx = player.x;
-            toast("Shield hat dich gerettet!", "Weiter geht's.");
-          } else {
-            // crash
-            state.shake = 28;
-            spawnBurst(player.x, player.y, 34, 520, 0.9, 3.0);
-            SFX.hit();
-            vibrate(70);
-            endGame("crash");
-            return;
-          }
-        }
-      }
-    }
-
-    // screen shake decay
-    state.shake = Math.max(0, state.shake - dt*36);
-    const s = state.shake;
-    state.shakeX = rnd(-s, s) * 0.4;
-    state.shakeY = rnd(-s, s) * 0.25;
-
-    // update HUD values that are dynamic
-    state.score += dt * (8 + state.combo*2.2);
-    if (state.score > state.best) state.best = state.score;
-
-    refreshHUD();
-  }
-
-  // ---------- Main loop ----------
-  let last = now();
-  function loop(tms){
-    const t = tms;
-    const dt = clamp((t - last) / 1000, 0, 0.033);
-    last = t;
-
-    // draw
-    ctx.save();
-    ctx.clearRect(0,0,state.w,state.h);
-
-    // apply shake
-    ctx.translate(state.shakeX, state.shakeY);
-
-    drawBackground(t);
-
-    // rows
-    for (const r of state.rows){
-      drawRow(r);
-    }
-
-    // pickups
-    for (const p of state.pickups){
-      drawPickup(p, t);
-    }
-
-    // particles behind player
-    drawParticles(dt);
-
-    // player
-    drawPlayer(t);
-
-    ctx.restore();
+    ctx.moveTo(W*0.5, H*0.12); ctx.lineTo(W*0.5, H*0.92);
+    ctx.stroke();
+    ctx.globalAlpha=1;
 
     // update
-    update(dt, t);
+    if (S.running && !S.paused){
+      // difficulty
+      S.speed += dt*18;
+      S.score += dt*(22 + (S.speed-420)*0.03);
+      if (S.score>best) best=S.score;
+
+      // slow timer
+      if (S.slow>0) S.slow = Math.max(0, S.slow - dt);
+
+      const sp = S.speed * (S.slow>0 ? 0.68 : 1.0);
+
+      // spawn rhythm
+      S.spawnT -= dt;
+      if (S.spawnT <= 0){
+        S.spawnT = clamp(0.62 - (S.speed-420)*0.0006, 0.28, 0.62);
+        spawnObstacle();
+        if (Math.random() < 0.85) spawnPickup();
+      }
+
+      // player smooth move to lane x
+      const tx = S.laneX[S.lane];
+      P.vx = P.vx*0.82 + (tx - P.x)*18;
+      P.x += P.vx * dt;
+      P.x = clamp(P.x, 0, W);
+
+      // obstacles move
+      for (const o of S.obstacles){
+        o.y += sp*dt;
+        // collision
+        if (circleHit(P.x,P.y,P.r*0.92, o.x,o.y,o.r)){
+          if (S.shield>0){
+            S.shield=0;
+            burst(P.x,P.y,26);
+            if (navigator.vibrate) navigator.vibrate(55);
+          } else {
+            burst(P.x,P.y,34);
+            if (navigator.vibrate) navigator.vibrate(90);
+            gameOver();
+          }
+        }
+      }
+      S.obstacles = S.obstacles.filter(o=>o.y < H+80);
+
+      // pickups
+      for (const p of S.pickups){
+        if (p.taken) continue;
+        p.y += sp*dt;
+        if (circleHit(P.x,P.y,P.r*0.95, p.x,p.y,p.r)){
+          p.taken=true;
+          burst(p.x,p.y,16);
+          if (navigator.vibrate) navigator.vibrate(16);
+          if (p.kind==="star"){
+            stars += 1;
+            S.score += 10;
+          } else if (p.kind==="shield"){
+            S.shield = 1;
+            S.score += 18;
+          } else if (p.kind==="slow"){
+            S.slow = 2.8;
+            S.score += 18;
+          }
+          save();
+        }
+      }
+      S.pickups = S.pickups.filter(p=>!p.taken && p.y < H+80);
+
+      hud();
+    }
+
+    // draw obstacles
+    for (const o of S.obstacles){
+      ctx.save();
+      ctx.shadowBlur=20;
+      ctx.shadowColor = o.kind==="big" ? "rgba(255,90,122,.55)" : "rgba(255,210,124,.45)";
+      const g = ctx.createLinearGradient(o.x-o.r,o.y-o.r,o.x+o.r,o.y+o.r);
+      g.addColorStop(0, o.kind==="big" ? "rgba(255,90,122,.95)" : "rgba(255,210,124,.95)");
+      g.addColorStop(1, "rgba(169,139,255,.75)");
+      ctx.fillStyle=g;
+      ctx.beginPath(); ctx.arc(o.x,o.y,o.r,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+
+    // draw pickups
+    for (const p of S.pickups){
+      if (p.taken) continue;
+      ctx.save();
+      ctx.shadowBlur=18;
+      let c="rgba(255,210,124,.75)";
+      let emoji="⭐";
+      if (p.kind==="shield"){ c="rgba(116,216,255,.75)"; emoji="🛡️"; }
+      if (p.kind==="slow"){ c="rgba(124,255,178,.75)"; emoji="⏳"; }
+      ctx.shadowColor=c;
+
+      ctx.fillStyle=c;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+
+      ctx.shadowBlur=0;
+      ctx.font = `900 ${Math.floor(p.r*1.5)}px system-ui`;
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillStyle="rgba(10,12,20,.85)";
+      ctx.fillText(emoji, p.x, p.y+0.5);
+      ctx.restore();
+    }
+
+    // particles
+    for (let i=S.particles.length-1;i>=0;i--){
+      const p=S.particles[i];
+      p.t += dt;
+      const k=p.t/p.life;
+      if (k>=1){ S.particles.splice(i,1); continue; }
+      p.x += p.vx*dt; p.y += p.vy*dt;
+      p.vx*=0.98; p.vy*=0.98;
+
+      ctx.globalAlpha=(1-k)*0.85;
+      ctx.fillStyle="rgba(255,255,255,.85)";
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r*(1-k*0.3),0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=1;
+    }
+
+    // player
+    ctx.save();
+    ctx.shadowBlur=28;
+    ctx.shadowColor = S.shield ? "rgba(116,216,255,.75)" : "rgba(255,109,246,.55)";
+    const pg = ctx.createLinearGradient(P.x-P.r,P.y-P.r,P.x+P.r,P.y+P.r);
+    pg.addColorStop(0,"rgba(116,216,255,.95)");
+    pg.addColorStop(1,"rgba(255,109,246,.92)");
+    ctx.fillStyle=pg;
+    ctx.beginPath(); ctx.arc(P.x,P.y,P.r,0,Math.PI*2); ctx.fill();
+
+    // shield ring
+    if (S.shield){
+      ctx.shadowBlur=0;
+      ctx.strokeStyle="rgba(116,216,255,.85)";
+      ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(P.x,P.y,P.r*1.55,0,Math.PI*2); ctx.stroke();
+    }
+    // slow ring
+    if (S.slow>0){
+      ctx.strokeStyle="rgba(124,255,178,.65)";
+      ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(P.x,P.y,P.r*1.9,0,Math.PI*2); ctx.stroke();
+    }
+    ctx.restore();
 
     requestAnimationFrame(loop);
   }
-
-  // ---------- Buttons ----------
-  btnPlay.addEventListener("click", () => { SFX.ui(); startGame(); });
-  btnHow.addEventListener("click", () => { SFX.ui(); setScreen("how"); });
-  btnHowPlay.addEventListener("click", () => { SFX.ui(); setScreen(null); startGame(); });
-  btnCloseHow.addEventListener("click", () => { SFX.ui(); setScreen("menu"); });
-
-  btnShop.addEventListener("click", () => {
-    SFX.ui();
-    buildShop();
-    setScreen("shop");
-    refreshHUD();
-  });
-  btnCloseShop.addEventListener("click", () => { SFX.ui(); setScreen(state.running ? null : "menu"); });
-
-  btnSound.addEventListener("click", () => {
-    SFX.enabled = !SFX.enabled;
-    if (SFX.enabled) SFX.ui();
-    toast(SFX.enabled ? "Sound an" : "Sound aus");
-    refreshHUD();
-    saveAll();
-  });
-
-  btnVibe.addEventListener("click", () => {
-    vibeOn = !vibeOn;
-    toast(vibeOn ? "Vibration an" : "Vibration aus");
-    if (vibeOn) vibrate(18);
-    refreshHUD();
-    saveAll();
-  });
-
-  btnPause.addEventListener("click", () => {
-    if (!state.running) return;
-    state.paused = !state.paused;
-    refreshHUD();
-    if (state.paused){
-      toast("Pause", "Tippe ▶️ zum Weiter.");
-    } else {
-      toast("Weiter!", "Good luck.");
-    }
-    SFX.ui();
-  });
-
-  btnReset.addEventListener("click", () => {
-    SFX.ui();
-    if (confirm("Wirklich alles zurücksetzen? (Bestscore, Coins, Skins)")){
-      localStorage.removeItem(KEY);
-      location.reload();
-    }
-  });
-
-  // Pause when tab hidden
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden && state.running) {
-      state.paused = true;
-      refreshHUD();
-    }
-  });
-
-  // ---------- Start ----------
-  resize();
-  refreshHUD();
-  setScreen("menu");
-  buildShop();
   requestAnimationFrame(loop);
 
+  // init HUD + menu
+  hud();
 })();
 </script>
 </body>
